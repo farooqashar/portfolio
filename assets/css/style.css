@@ -210,14 +210,14 @@ h1, h2, h3, h4, h5, h6 {
 /*--------------------------------------------------------------
 # Hero Section
 --------------------------------------------------------------*/
-#hero {
+#mainTop {
   width: 100%;
   height: 100vh;
-  background: url("../img/hero-bg.jpg") top center;
+  background: url("../img/ashar.jpg") top center;
   background-size: cover;
 }
 
-#hero:before {
+#mainTop:before {
   content: "";
   background: rgba(5, 13, 24, 0.3);
   position: absolute;
@@ -228,13 +228,13 @@ h1, h2, h3, h4, h5, h6 {
   z-index: 1;
 }
 
-#hero .hero-container {
+#mainTop .hero-container {
   position: relative;
   z-index: 2;
   min-width: 300px;
 }
 
-#hero h1 {
+#mainTop h1 {
   margin: 0 0 10px 0;
   font-size: 64px;
   font-weight: 700;
@@ -242,14 +242,14 @@ h1, h2, h3, h4, h5, h6 {
   color: #fff;
 }
 
-#hero p {
+#mainTop p {
   color: #fff;
   margin-bottom: 50px;
   font-size: 26px;
   font-family: "Poppins", sans-serif;
 }
 
-#hero p span {
+#mainTop p span {
   color: #fff;
   padding-bottom: 4px;
   letter-spacing: 1px;
@@ -257,17 +257,17 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @media (min-width: 1024px) {
-  #hero {
+  #mainTop {
     background-attachment: fixed;
   }
 }
 
 @media (max-width: 768px) {
-  #hero h1 {
+  #mainTop h1 {
     font-size: 28px;
     line-height: 36px;
   }
-  #hero h2 {
+  #mainTop h2 {
     font-size: 18px;
     line-height: 24px;
     margin-bottom: 30px;
