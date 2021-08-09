@@ -543,6 +543,11 @@ section {
   z-index: 1;
 }
 
+.imgContainer {
+  width: 30%;
+  height: 200px;
+
+}
 .portfolio .portfolio-wrap::before {
   content: "";
   background: rgba(255, 255, 255, 0.5);
@@ -1038,6 +1043,7 @@ section {
     display: inline-block;
   }
 }
+
 
 /*--------------------------------------------------------------
 # Footer
