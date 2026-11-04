@@ -1,0 +1,9 @@
+{
+  "functions": {
+    "api/ask.js": {
+      "includeFiles": "index.html",
+      "maxDuration": 30,
+      "supportsCancellation": true
+    }
+  }
+}
