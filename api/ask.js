@@ -12,9 +12,16 @@ const RATE_LIMIT = 20; // per IP per window, best effort (per serverless instanc
 const WINDOW_MS = 10 * 60 * 1000;
 const DATA_BASE = process.env.ASHAR_DATA_BASE || 'https://raw.githubusercontent.com/farooqashar/ashar-mcp/main/data/';
 const CONTEXT_TTL_MS = 60 * 60 * 1000;
+const DEGRADED_TTL_MS = 2 * 60 * 1000;
+const UPSTREAM_TIMEOUT_MS = 25 * 1000; // below the function's 30s maxDuration
+
+// End-of-stream markers. Every response ends with exactly one, so the page can tell a finished answer
+// from a failed or cut-off one (and keep failed turns out of the conversation history).
+const DONE_MARK = '\u0000OK';
+const FAIL_MARK = '\u0000ERR';
 
 const hits = new Map();
-let ctxCache = { text: null, at: 0 };
+let ctxCache = { text: null, at: 0, ttl: 0 };
 
 const INSTRUCTIONS = `You are the "Ask me" assistant on Ashar Farooq's personal website (ashar.vercel.app). Visitors (recruiters, friends, curious people) ask about Ashar: his background, education, work, projects, skills, activities, travels and life events.
 
@@ -79,24 +86,49 @@ async function getJson(file) {
   return r.json();
 }
 
+// Fetch + format one remote source. Any failure (network, HTTP, or unexpected JSON shape) yields null.
+async function loadSource(file, format) {
+  try {
+    return format(await getJson(file));
+  } catch (e) {
+    console.error(`${file} unavailable`, e);
+    return null;
+  }
+}
+
+// Last successfully formatted text per source, kept so a failed refresh never drops data we already had.
+const lastGood = { done: null, travel: null };
+
 async function profile() {
-  if (ctxCache.text && Date.now() - ctxCache.at < CONTEXT_TTL_MS) return ctxCache.text;
-  const parts = [`WEBSITE (ashar.vercel.app):\n${pageText()}`];
-  const [done, travel] = await Promise.allSettled([getJson('things-done.json'), getJson('travel.json')]);
-  if (done.status === 'fulfilled') parts.push(thingsDoneText(done.value));
-  else console.error('things-done fetch failed', done.reason);
-  if (travel.status === 'fulfilled') parts.push(travelText(travel.value));
-  else console.error('travel fetch failed', travel.reason);
-  ctxCache = { text: parts.join('\n\n'), at: Date.now() };
+  if (ctxCache.text && Date.now() - ctxCache.at < ctxCache.ttl) return ctxCache.text;
+  const [done, travel] = await Promise.all([
+    loadSource('things-done.json', thingsDoneText),
+    loadSource('travel.json', travelText),
+  ]);
+  if (done) lastGood.done = done;
+  if (travel) lastGood.travel = travel;
+  const complete = Boolean(done && travel);
+  const parts = [`WEBSITE (ashar.vercel.app):\n${pageText()}`, lastGood.done, lastGood.travel].filter(Boolean);
+  // A degraded refresh is retried after a couple of minutes instead of being trusted for the full hour.
+  ctxCache = { text: parts.join('\n\n'), at: Date.now(), ttl: complete ? CONTEXT_TTL_MS : DEGRADED_TTL_MS };
   return ctxCache.text;
 }
 
+let lastSweep = 0;
 function limited(ip) {
   const now = Date.now();
+  if (now - lastSweep > 60 * 1000) {
+    lastSweep = now;
+    for (const [key, list] of hits) if (!list.length || now - list[list.length - 1] >= WINDOW_MS) hits.delete(key);
+  }
   const list = (hits.get(ip) || []).filter((t) => now - t < WINDOW_MS);
+  if (list.length >= RATE_LIMIT) {
+    hits.set(ip, list);
+    return true; // rejected requests are not recorded, so the list never grows past RATE_LIMIT
+  }
   list.push(now);
   hits.set(ip, list);
-  return list.length > RATE_LIMIT;
+  return false;
 }
 
 async function readBody(req) {
@@ -118,9 +150,10 @@ module.exports = async function handler(req, res) {
   try {
     const body = await readBody(req);
     messages = (Array.isArray(body.messages) ? body.messages : [])
-      .filter((m) => (m && (m.role === 'user' || m.role === 'assistant')) && typeof m.content === 'string' && m.content.trim())
-      .slice(-MAX_TURNS)
-      .map((m) => ({ role: m.role, content: m.content.slice(0, m.role === 'user' ? MAX_CHARS : 4000) }));
+      .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+      .map((m) => ({ role: m.role, content: m.content.slice(0, m.role === 'user' ? MAX_CHARS : 4000).trim() }))
+      .filter((m) => m.content) // blank check after truncation, so whitespace-only text never goes upstream
+      .slice(-MAX_TURNS);
   } catch {
     return res.status(400).json({ error: 'Bad request' });
   }
@@ -129,11 +162,17 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'Ask a question first.' });
   }
 
+  // Abort the upstream call on a deadline, or as soon as the visitor closes the page.
+  const disconnect = new AbortController();
+  res.on('close', () => { if (!res.writableEnded) disconnect.abort(); });
+  const signal = AbortSignal.any([AbortSignal.timeout(UPSTREAM_TIMEOUT_MS), disconnect.signal]);
+
   const today = new Date().toLocaleDateString('en-US', { timeZone: 'America/New_York', dateStyle: 'long' });
   let upstream;
   try {
     upstream = await fetch((process.env.ANTHROPIC_BASE_URL || 'https://api.anthropic.com') + '/v1/messages', {
       method: 'POST',
+      signal,
       headers: {
         'content-type': 'application/json',
         'x-api-key': process.env.ANTHROPIC_API_KEY,
@@ -163,27 +202,39 @@ module.exports = async function handler(req, res) {
   res.writeHead(200, { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store' });
   const decoder = new TextDecoder();
   let buf = '';
+  let finished = false; // true only after the provider's message_stop event
+  let failed = false;
+  const handle = (event) => {
+    const data = event.split('\n').find((l) => l.startsWith('data:'));
+    if (!data) return;
+    let ev;
+    try {
+      ev = JSON.parse(data.slice(5).trim());
+    } catch {
+      return; // keep-alives or malformed lines
+    }
+    if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') res.write(ev.delta.text);
+    else if (ev.type === 'message_stop') finished = true;
+    else if (ev.type === 'error') {
+      failed = true;
+      console.error('anthropic stream error event', ev.error);
+    }
+  };
   try {
     for await (const chunk of upstream.body) {
-      buf += decoder.decode(chunk, { stream: true });
+      // SSE allows CRLF, CR or LF line endings; normalize before splitting events.
+      buf += decoder.decode(chunk, { stream: true }).replace(/\r\n?/g, '\n');
       let i;
       while ((i = buf.indexOf('\n\n')) !== -1) {
-        const event = buf.slice(0, i);
+        handle(buf.slice(0, i));
         buf = buf.slice(i + 2);
-        const data = event.split('\n').find((l) => l.startsWith('data: '));
-        if (!data) continue;
-        try {
-          const ev = JSON.parse(data.slice(6));
-          if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') res.write(ev.delta.text);
-          else if (ev.type === 'error') res.write('\n\n_Sorry — something went wrong answering that._');
-        } catch {
-          /* ignore keep-alives and partial lines */
-        }
       }
     }
+    if (buf.trim()) handle(buf);
   } catch (e) {
+    failed = true;
     console.error('stream error', e);
-    res.write('\n\n_Sorry — something went wrong answering that._');
   }
-  res.end();
+  if (!finished && !failed) console.error('anthropic stream ended before message_stop');
+  res.end(finished && !failed ? DONE_MARK : FAIL_MARK);
 };

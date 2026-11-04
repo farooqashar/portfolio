@@ -21,6 +21,7 @@
   panel.innerHTML =
     '<div class="ask-head"><img src="assets/img/asharflag.JPG" alt=""><div><b>Ask about Ashar</b><small>Answers from this site, his Things Done log and travel atlas</small></div><button type="button" aria-label="Close">&times;</button></div>' +
     '<div class="ask-body"></div>' +
+    '<div class="ask-sr" role="status" aria-live="polite" aria-atomic="true"></div>' +
     '<form class="ask-form"><input maxlength="500" placeholder="e.g. What projects has he built?" aria-label="Your question"><button type="submit" aria-label="Send"><i class="bx bx-send"></i></button></form>' +
     '<div class="ask-foot">Powered by Claude · answers may be imperfect</div>';
 
@@ -31,6 +32,10 @@
   var form = panel.querySelector('form');
   var input = form.querySelector('input');
   var send = form.querySelector('button');
+  var live = panel.querySelector('.ask-sr');
+  // The server ends every answer with one of these markers (see api/ask.js).
+  var DONE_MARK = '\u0000OK';
+  var FAIL_MARK = '\u0000ERR';
 
   function esc(s) {
     return s.replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
@@ -55,6 +60,7 @@
     }
     messages.forEach(function (m) {
       var inner = m.role === 'user' ? esc(m.content)
+        : m.error ? (m.content ? rich(m.content) : '') + '<div><em>' + esc(m.error) + '</em></div>'
         : m.content ? rich(m.content) : '<span class="ask-dots"><span></span><span></span><span></span></span>';
       html += '<div class="ask-msg ' + (m.role === 'user' ? 'user' : 'bot') + '"><div class="ask-bubble">' + inner + '</div></div>';
     });
@@ -63,12 +69,25 @@
     send.disabled = busy;
   }
 
+  // Conversation sent to the server: completed answers only. A failed turn (and the question that
+  // produced it) stays on screen but is never resent as if it were a real answer.
+  function historyFor(q) {
+    var out = [];
+    for (var i = 0; i < messages.length; i++) {
+      var m = messages[i], next = messages[i + 1];
+      if (m.role === 'user' && next && next.role === 'assistant' && !next.error) out.push({ role: 'user', content: m.content }, { role: 'assistant', content: next.content });
+    }
+    out.push({ role: 'user', content: q });
+    return out;
+  }
+
   function ask(q) {
     q = q.trim();
     if (!q || busy) return;
-    var history = messages.concat([{ role: 'user', content: q }]);
+    var history = historyFor(q);
     var reply = { role: 'assistant', content: '' };
-    messages = history.concat([reply]);
+    messages = messages.concat([{ role: 'user', content: q }, reply]);
+    live.textContent = '';
     input.value = '';
     busy = true;
     render();
@@ -82,21 +101,31 @@
       }
       var reader = res.body.getReader();
       var dec = new TextDecoder();
+      var raw = '';
       function pump() {
         return reader.read().then(function (r) {
-          if (r.done) return;
-          reply.content += dec.decode(r.value, { stream: true });
+          if (r.done) {
+            raw += dec.decode();
+            if (raw.slice(-DONE_MARK.length) === DONE_MARK) { reply.content = raw.slice(0, -DONE_MARK.length).trim(); return; }
+            reply.content = raw.replace(FAIL_MARK, '').trim();
+            // No success marker: the server reported a failure or the connection was cut off.
+            throw new Error(reply.content ? 'The answer was cut off. Try asking again.' : 'Something went wrong. Try again.');
+          }
+          raw += dec.decode(r.value, { stream: true });
+          reply.content = raw.split('\u0000')[0];
           render();
           return pump();
         });
       }
       return pump();
     }).catch(function (e) {
-      reply.content = '_' + e.message + '_';
+      reply.error = e.message || 'Something went wrong. Try again.';
     }).then(function () {
-      if (!reply.content) reply.content = '_No answer came back. Try again._';
+      if (!reply.content && !reply.error) reply.error = 'No answer came back. Try again.';
       busy = false;
       render();
+      // Announce only the finished reply to screen readers, not every streamed chunk.
+      live.textContent = reply.error ? reply.error : reply.content.replace(/\*\*/g, '');
     });
   }
 
@@ -105,6 +134,7 @@
     panel.classList.toggle('open', isOpen);
     fab.innerHTML = isOpen ? '<i class="bx bx-x"></i><span>Close</span>' : '<i class="bx bx-message-rounded-dots"></i><span>Ask me anything</span>';
     if (isOpen) { render(); setTimeout(function () { input.focus(); }, 50); }
+    else if (panel.contains(document.activeElement) || document.activeElement === document.body) fab.focus();
   }
 
   fab.addEventListener('click', function () { toggle(); });
@@ -114,5 +144,5 @@
     if (b) ask(b.textContent);
   });
   form.addEventListener('submit', function (e) { e.preventDefault(); ask(input.value); });
-  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') toggle(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && panel.classList.contains('open')) toggle(false); });
 })();
