@@ -98,11 +98,15 @@ h6 {
   text-decoration: none;
 }
 
+/* Up to five icons per row; a shorter last row stays centered. */
 #header .profile .social-links {
-  display: grid;
-  grid-template-columns: repeat(4, 36px);
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 8px;
+  max-width: calc(5 * 36px + 4 * 8px);
+  margin-left: auto;
+  margin-right: auto;
 }
 
 #header .profile .social-links a {
