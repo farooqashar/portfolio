@@ -5,5 +5,19 @@
       "maxDuration": 30,
       "supportsCancellation": true
     }
-  }
+  },
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.asharfarooq.xyz" }],
+      "destination": "https://asharfarooq.xyz/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "ashar.vercel.app" }],
+      "destination": "https://asharfarooq.xyz/:path*",
+      "permanent": true
+    }
+  ]
 }
