@@ -72,10 +72,18 @@
   /**
    * Mobile nav toggle
    */
+  const setMobileNav = (open) => {
+    select("body").classList.toggle("mobile-nav-active", open);
+    let navbarToggle = select(".mobile-nav-toggle");
+    let icon = navbarToggle.querySelector("i");
+    icon.classList.toggle("bi-list", !open);
+    icon.classList.toggle("bi-x", open);
+    navbarToggle.setAttribute("aria-expanded", open);
+    navbarToggle.setAttribute("aria-label", open ? "Close menu" : "Open menu");
+  };
+
   on("click", ".mobile-nav-toggle", function(e) {
-    select("body").classList.toggle("mobile-nav-active");
-    this.classList.toggle("bi-list");
-    this.classList.toggle("bi-x");
+    setMobileNav(!select("body").classList.contains("mobile-nav-active"));
   });
 
   /**
@@ -90,10 +98,7 @@
 
         let body = select("body");
         if (body.classList.contains("mobile-nav-active")) {
-          body.classList.remove("mobile-nav-active");
-          let navbarToggle = select(".mobile-nav-toggle");
-          navbarToggle.classList.toggle("bi-list");
-          navbarToggle.classList.toggle("bi-x");
+          setMobileNav(false);
         }
         scrollto(this.hash);
       }
