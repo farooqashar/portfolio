@@ -12,6 +12,7 @@
   var fab = document.createElement('button');
   fab.className = 'ask-fab';
   fab.setAttribute('aria-label', 'Ask me anything');
+  fab.setAttribute('aria-expanded', 'false');
   fab.innerHTML = '<i class="bx bx-message-rounded-dots"></i><span>Ask me anything</span>';
 
   var panel = document.createElement('div');
@@ -132,6 +133,8 @@
   function toggle(open) {
     var isOpen = open === undefined ? !panel.classList.contains('open') : open;
     panel.classList.toggle('open', isOpen);
+    fab.setAttribute('aria-label', isOpen ? 'Close chat' : 'Ask me anything');
+    fab.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
     fab.innerHTML = isOpen ? '<i class="bx bx-x"></i><span>Close</span>' : '<i class="bx bx-message-rounded-dots"></i><span>Ask me anything</span>';
     if (isOpen) { render(); setTimeout(function () { input.focus(); }, 50); }
     else if (panel.contains(document.activeElement) || document.activeElement === document.body) fab.focus();
