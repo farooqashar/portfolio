@@ -20,7 +20,7 @@
   panel.setAttribute('role', 'dialog');
   panel.setAttribute('aria-label', 'Ask about Ashar');
   panel.innerHTML =
-    '<div class="ask-head"><img src="assets/img/asharflag.JPG" alt=""><div><b>Ask about Ashar</b><small>Answers from this site, his Things Done log and travel atlas</small></div><button type="button" aria-label="Close">&times;</button></div>' +
+    '<div class="ask-head"><img src="assets/img/asharflag.webp" alt=""><div><b>Ask about Ashar</b><small>Answers from this site, his Things Done log and travel atlas</small></div><button type="button" aria-label="Close">&times;</button></div>' +
     '<div class="ask-body"></div>' +
     '<div class="ask-sr" role="status" aria-live="polite" aria-atomic="true"></div>' +
     '<form class="ask-form"><input maxlength="500" placeholder="e.g. What projects has he built?" aria-label="Your question"><button type="submit" aria-label="Send"><i class="bx bx-send"></i></button></form>' +
