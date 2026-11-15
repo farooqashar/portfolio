@@ -134,23 +134,6 @@
   }
 
   /**
-   * Skills animation
-   */
-  let skilsContent = select(".skills-content");
-  if (skilsContent) {
-    new Waypoint({
-      element: skilsContent,
-      offset: "80%",
-      handler: function(direction) {
-        let progress = select(".progress .progress-bar", true);
-        progress.forEach(el => {
-          el.style.width = el.getAttribute("aria-valuenow") + "%";
-        });
-      }
-    });
-  }
-
-  /**
    * Porfolio isotope and filter
    */
   window.addEventListener("load", () => {
@@ -236,6 +219,39 @@
       }
     }
   });
+
+  /**
+   * About facts: age from the birthday, travel counts from the travel site's data.
+   * The numbers in index.html stay as the fallback.
+   */
+  const ageEl = select("#age");
+  if (ageEl) {
+    const today = new Date();
+    // Birthday: September 27, 2000 (months are 0-based)
+    let age = today.getFullYear() - 2000;
+    if (today.getMonth() < 8 || (today.getMonth() === 8 && today.getDate() < 27)) {
+      age--;
+    }
+    ageEl.textContent = age;
+  }
+
+  const countriesEl = select("#countries-traveled");
+  const statesEl = select("#us-states-visited");
+  if (countriesEl || statesEl) {
+    fetch("https://raw.githubusercontent.com/farooqashar/ashar-mcp/main/data/travel.json")
+      .then(r => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then(d => {
+        const countries = d.stats && d.stats.totalCountries;
+        const states = (d.challenges || []).find(c => c.id === "us-states");
+        if (countriesEl && Number.isInteger(countries)) {
+          countriesEl.textContent = countries;
+        }
+        if (statesEl && states && Number.isInteger(states.progress)) {
+          statesEl.textContent = states.progress;
+        }
+      })
+      .catch(() => {});
+  }
 
   /**
    * Animation on scroll
