@@ -372,7 +372,7 @@ section {
 # Skills
 --------------------------------------------------------------*/
 .skills .skill-group {
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .skills .skill-group h3 {
@@ -381,7 +381,7 @@ section {
   text-transform: uppercase;
   font-family: "Poppins", sans-serif;
   color: #050d18;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .skills .skill-tags {
@@ -390,15 +390,15 @@ section {
   margin: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .skills .skill-tags li {
-  padding: 4px 12px;
+  padding: 3px 10px;
   border-radius: 16px;
   background: #dce8f8;
   color: #050d18;
-  font-size: 14px;
+  font-size: 13px;
 }
 
 /*--------------------------------------------------------------
