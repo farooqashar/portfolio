@@ -1,10 +1,12 @@
-// "Recent work": featured projects from the AI portfolio's projects.json, shown at the top of Portfolio.
+// "Recent work": hand-picked projects from the AI portfolio's projects.json, shown at the top of Portfolio.
 // Any failure leaves the block hidden, so the earlier projects below are all that shows.
 (function () {
   var BASE = 'https://ai.asharfarooq.xyz/';
   var box = document.getElementById('recent-work');
   if (!box || !window.fetch) return;
   var grid = box.querySelector('.recent-grid');
+  // Project ids to show, in this order. Ids missing from the feed are skipped.
+  var PICKS = ['lirr-live', 'reading-shelf', 'tried-stack-tools', 'ashar-mcp', 'ashistant', 'ashar-cli', 'ashar-things', 'birthday-haul', 'ashar-travel'];
 
   function esc(s) {
     return String(s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; });
@@ -31,11 +33,13 @@
       return r.json();
     })
     .then(function (projects) {
-      var featured = (Array.isArray(projects) ? projects : []).filter(function (p) {
-        return p && p.featured && p.title;
+      var byId = {};
+      (Array.isArray(projects) ? projects : []).forEach(function (p) {
+        if (p && p.id && p.title) byId[p.id] = p;
       });
-      if (!featured.length) return;
-      grid.innerHTML = featured.map(function (p) {
+      var picked = PICKS.map(function (id) { return byId[id]; }).filter(Boolean);
+      if (!picked.length) return;
+      grid.innerHTML = picked.map(function (p) {
         return '<a class="recent-card" target="_blank" rel="noopener" href="' + esc(link(p)) + '">' +
           '<span class="recent-glyph" style="background:' + color(p.color) + '" aria-hidden="true">' + esc(p.glyph || p.title.charAt(0)) + '</span>' +
           '<span class="recent-text"><b>' + esc(p.title) + '</b><small>' + esc(p.summary || '') + '</small></span>' +
