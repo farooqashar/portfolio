@@ -384,6 +384,22 @@ section {
   margin-bottom: 8px;
 }
 
+@media (min-width: 992px) {
+  .skills .skill-group {
+    display: flex;
+    align-items: baseline;
+  }
+
+  .skills .skill-group h3 {
+    flex: 0 0 270px;
+    margin-bottom: 0;
+  }
+
+  .skills .skill-group .skill-tags {
+    flex: 1;
+  }
+}
+
 .skills .skill-tags {
   list-style: none;
   padding: 0;
