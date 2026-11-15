@@ -254,6 +254,24 @@
   }
 
   /**
+   * Life Happenings: collapse long chapters behind a "Show all" button
+   */
+  document.querySelectorAll(".chapter-toggle").forEach((btn) => {
+    const list = document.getElementById(btn.getAttribute("aria-controls"));
+    if (!list) return;
+    const total = list.children.length;
+    list.classList.add("is-collapsed");
+    btn.hidden = false;
+    btn.addEventListener("click", () => {
+      const expanded = btn.getAttribute("aria-expanded") === "true";
+      btn.setAttribute("aria-expanded", String(!expanded));
+      list.classList.toggle("is-collapsed", expanded);
+      btn.textContent = expanded ? `Show all ${total}` : "Show fewer";
+      if (expanded) btn.closest(".chapter").scrollIntoView({ block: "nearest" });
+    });
+  });
+
+  /**
    * Animation on scroll
    */
   window.addEventListener("load", () => {
