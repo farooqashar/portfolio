@@ -123,14 +123,18 @@
   const typed = select(".typed");
   if (typed) {
     let typed_strings = typed.getAttribute("data-typed-items");
-    typed_strings = typed_strings.split(",");
-    new Typed(".typed", {
-      strings: typed_strings,
-      loop: true,
-      typeSpeed: 100,
-      backSpeed: 50,
-      backDelay: 2000
-    });
+    typed_strings = typed_strings.split(",").map(s => s.trim());
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      typed.textContent = typed_strings[0];
+    } else {
+      new Typed(".typed", {
+        strings: typed_strings,
+        loop: true,
+        typeSpeed: 100,
+        backSpeed: 50,
+        backDelay: 2000
+      });
+    }
   }
 
   /**
@@ -279,7 +283,8 @@
       duration: 1000,
       easing: "ease-in-out",
       once: true,
-      mirror: false
+      mirror: false,
+      disable: window.matchMedia("(prefers-reduced-motion: reduce)").matches
     });
   });
 })();
