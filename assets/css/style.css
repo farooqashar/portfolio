@@ -137,6 +137,12 @@ h6 {
 @media (max-width: 1199px) {
   #header {
     left: -300px;
+    visibility: hidden;
+    transition: left 0.5s, visibility 0s 0.5s;
+  }
+  .mobile-nav-active #header {
+    visibility: visible;
+    transition: left 0.5s;
   }
   #main {
     margin-left: 0;
@@ -205,7 +211,6 @@ h6 {
   padding: 0;
   font-size: 24px;
   transition: all 0.4s;
-  outline: none !important;
   background-color: #149ddd;
   color: #fff;
   width: 40px;
@@ -216,6 +221,12 @@ h6 {
   line-height: 0;
   border-radius: 50px;
   cursor: pointer;
+}
+
+.mobile-nav-toggle:focus-visible {
+  outline: 2px solid #173b6c;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px #fff;
 }
 
 .mobile-nav-active {
