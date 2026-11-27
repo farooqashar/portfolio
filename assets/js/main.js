@@ -49,7 +49,9 @@
     let elementPos = select(el).offsetTop;
     window.scrollTo({
       top: elementPos,
-      behavior: "smooth"
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+        ? "auto"
+        : "smooth"
     });
   };
 
@@ -94,13 +96,10 @@
     ".scrollto",
     function(e) {
       if (select(this.hash)) {
-        e.preventDefault();
-
         let body = select("body");
         if (body.classList.contains("mobile-nav-active")) {
           setMobileNav(false);
         }
-        scrollto(this.hash);
       }
     },
     true
