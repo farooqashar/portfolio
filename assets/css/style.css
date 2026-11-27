@@ -129,6 +129,14 @@ h6 {
   transition: 0.3s;
 }
 
+/* X logo is an inline SVG (Boxicons has no X icon); size it like the font icons */
+#header .profile .social-links a .x-logo {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: top;
+}
+
 #header .profile .social-links a:hover {
   background: #149ddd;
   color: #fff;
