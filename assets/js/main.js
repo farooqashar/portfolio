@@ -142,24 +142,26 @@
       let portfolioIsotope = new Isotope(portfolioContainer, {
         itemSelector: ".portfolio-item"
       });
+      portfolioIsotope.on("arrangeComplete", function() {
+        AOS.refresh();
+      });
 
-      let portfolioFilters = select("#portfolio-flters li", true);
+      let portfolioFilters = select("#portfolio-flters button", true);
 
       on(
         "click",
-        "#portfolio-flters li",
+        "#portfolio-flters button",
         function(e) {
           e.preventDefault();
           portfolioFilters.forEach(function(el) {
             el.classList.remove("filter-active");
+            el.setAttribute("aria-pressed", "false");
           });
           this.classList.add("filter-active");
+          this.setAttribute("aria-pressed", "true");
 
           portfolioIsotope.arrange({
             filter: this.getAttribute("data-filter")
-          });
-          portfolioIsotope.on("arrangeComplete", function() {
-            AOS.refresh();
           });
         },
         true

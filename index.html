@@ -765,13 +765,13 @@
           <div class="row" data-aos="fade-up">
             <div class="col-lg-12 d-flex justify-content-center">
               <ul id="portfolio-flters">
-                <li data-filter="*" class="filter-active">All</li>
-                <li data-filter=".filter-react">React</li>
-                <li data-filter=".filter-apis">APIs</li>
-                <li data-filter=".filter-python">Python</li>
-                <li data-filter=".filter-flask">Flask</li>
-                <li data-filter=".filter-node">Node</li>
-                <li data-filter=".filter-vue">Vue</li>
+                <li><button type="button" data-filter="*" class="filter-active" aria-pressed="true">All</button></li>
+                <li><button type="button" data-filter=".filter-react" aria-pressed="false">React</button></li>
+                <li><button type="button" data-filter=".filter-apis" aria-pressed="false">APIs</button></li>
+                <li><button type="button" data-filter=".filter-python" aria-pressed="false">Python</button></li>
+                <li><button type="button" data-filter=".filter-flask" aria-pressed="false">Flask</button></li>
+                <li><button type="button" data-filter=".filter-node" aria-pressed="false">Node</button></li>
+                <li><button type="button" data-filter=".filter-vue" aria-pressed="false">Vue</button></li>
               </ul>
             </div>
           </div>
@@ -781,7 +781,7 @@
             data-aos="fade-up"
             data-aos-delay="100"
           >
-            <div class="col-lg-4 col-md-6 portfolio-item filter-react">
+            <div class="col-lg-4 col-md-6 portfolio-item filter-react filter-node">
               <div class="portfolio-wrap">
                 <a
                   href="assets/img/portfolio/frontend.webp"
@@ -1189,7 +1189,7 @@
               </div>
             </div>
 
-            <div class="col-lg-4 col-md-6 portfolio-item">
+            <div class="col-lg-4 col-md-6 portfolio-item filter-react">
               <div class="portfolio-wrap">
                 <a
                   href="assets/img/portfolio/next_blog.webp"
@@ -1291,7 +1291,7 @@
               </div>
             </div>
 
-            <div class="col-lg-4 col-md-6 portfolio-item filter-python">
+            <div class="col-lg-4 col-md-6 portfolio-item filter-python filter-flask">
               <div class="portfolio-wrap">
                 <a
                   href="assets/img/portfolio/flask.webp"

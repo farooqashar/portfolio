@@ -641,21 +641,33 @@ section {
 }
 
 .portfolio #portfolio-flters li {
+  display: inline-block;
+  margin-bottom: 5px;
+}
+
+.portfolio #portfolio-flters button {
   cursor: pointer;
   display: inline-block;
   padding: 10px 15px 8px 15px;
+  background: none;
+  border: 0;
+  font: inherit;
   font-size: 14px;
   font-weight: 600;
   line-height: 1;
   text-transform: uppercase;
   color: #272829;
-  margin-bottom: 5px;
   transition: all 0.3s ease-in-out;
 }
 
-.portfolio #portfolio-flters li:hover,
-.portfolio #portfolio-flters li.filter-active {
+.portfolio #portfolio-flters button:hover,
+.portfolio #portfolio-flters button.filter-active {
   color: #149ddd;
+}
+
+.portfolio #portfolio-flters button:focus-visible {
+  outline: 2px solid #173b6c;
+  outline-offset: 2px;
 }
 
 .portfolio #portfolio-flters li:last-child {
