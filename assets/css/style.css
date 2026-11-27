@@ -7,13 +7,18 @@ body {
 }
 
 a {
-  color: #149ddd;
+  color: #0b6a96;
   text-decoration: none;
 }
 
 a:hover {
-  color: #37b3ed;
+  color: #173b6c;
   text-decoration: none;
+}
+
+#main a:not([class]),
+#main a:not([class]):hover {
+  text-decoration: underline;
 }
 
 h1,

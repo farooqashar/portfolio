@@ -51,7 +51,7 @@
 .ask-form button { border: 0; background: #0b74a8; color: #fff; border-radius: 10px; width: 42px; font-size: 18px; cursor: pointer; }
 .ask-form button:disabled { opacity: .45; cursor: default; }
 .ask-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
-.ask-foot { text-align: center; font-size: 11px; color: #9aa5b1; padding: 0 10px 8px; background: #fff; }
+.ask-foot { text-align: center; font-size: 11px; color: #6c757d; padding: 0 10px 8px; background: #fff; }
 @media (max-width: 575px) {
   .ask-fab span { display: none; }
   .ask-fab { padding: 12px; }
