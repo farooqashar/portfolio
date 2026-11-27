@@ -235,6 +235,11 @@
     ageEl.textContent = age;
   }
 
+  const yearEl = select("#copyright-year");
+  if (yearEl) {
+    yearEl.textContent = new Date().getFullYear();
+  }
+
   const countriesEl = select("#countries-traveled");
   const statesEl = select("#us-states-visited");
   if (countriesEl || statesEl) {
