@@ -41,6 +41,7 @@
 .ask-dots span { display: inline-block; width: 6px; height: 6px; margin: 0 2px; border-radius: 50%; background: #9aa5b1; animation: askb 1s infinite; }
 .ask-dots span:nth-child(2) { animation-delay: .15s; } .ask-dots span:nth-child(3) { animation-delay: .3s; }
 @keyframes askb { 0%, 80%, 100% { transform: translateY(0); opacity: .5 } 40% { transform: translateY(-4px); opacity: 1 } }
+@media (prefers-reduced-motion: reduce) { .ask-dots span { animation: none; opacity: 1; } }
 .ask-form { display: flex; gap: 8px; padding: 10px; border-top: 1px solid #e3eaf2; background: #fff; }
 .ask-form input {
   flex: 1; min-width: 0; border: 1px solid #d5dde6; border-radius: 10px; padding: 9px 11px;
