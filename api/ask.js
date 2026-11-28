@@ -5,7 +5,7 @@ const fs = require('fs');
 const path = require('path');
 
 const MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-5-5';
-const MAX_TOKENS = 700;
+const MAX_TOKENS = 3000; // thinking shares this budget with the answer
 const MAX_TURNS = 10;
 const MAX_CHARS = 500;
 const RATE_LIMIT = 20; // per IP per window, best effort (per serverless instance)
@@ -17,8 +17,13 @@ const UPSTREAM_TIMEOUT_MS = 25 * 1000; // below the function's 30s maxDuration
 
 // End-of-stream markers. Every response ends with exactly one, so the page can tell a finished answer
 // from a failed or cut-off one (and keep failed turns out of the conversation history).
+// Only stop reasons that mean the model finished its answer count as done; max_tokens, refusal or none is a failure.
+const COMPLETE_STOPS = new Set(['end_turn', 'stop_sequence']);
 const DONE_MARK = '\u0000OK';
 const FAIL_MARK = '\u0000ERR';
+
+// Older models reject output_config.effort, and ANTHROPIC_MODEL can select one.
+const NO_EFFORT = /^claude-(3|haiku-4|sonnet-4-5|sonnet-4-2|sonnet-4$|opus-4-1|opus-4-2|opus-4$)/;
 
 const hits = new Map();
 let ctxCache = { text: null, at: 0, ttl: 0 };
@@ -188,6 +193,8 @@ module.exports = async function handler(req, res) {
           { type: 'text', text: `PROFILE:\n${await profile()}`, cache_control: { type: 'ephemeral' } },
         ],
         messages,
+        // Short answers in a chat: keep thinking light so the answer fits in MAX_TOKENS.
+        ...(NO_EFFORT.test(MODEL) ? {} : { output_config: { effort: 'low' } }),
       }),
     });
   } catch (e) {
@@ -204,6 +211,7 @@ module.exports = async function handler(req, res) {
   let buf = '';
   let finished = false; // true only after the provider's message_stop event
   let failed = false;
+  let stopReason = null; // from the message_delta event that precedes message_stop
   const handle = (event) => {
     const data = event.split('\n').find((l) => l.startsWith('data:'));
     if (!data) return;
@@ -214,6 +222,7 @@ module.exports = async function handler(req, res) {
       return; // keep-alives or malformed lines
     }
     if (ev.type === 'content_block_delta' && ev.delta?.type === 'text_delta') res.write(ev.delta.text);
+    else if (ev.type === 'message_delta' && ev.delta?.stop_reason) stopReason = ev.delta.stop_reason;
     else if (ev.type === 'message_stop') finished = true;
     else if (ev.type === 'error') {
       failed = true;
@@ -236,5 +245,9 @@ module.exports = async function handler(req, res) {
     console.error('stream error', e);
   }
   if (!finished && !failed) console.error('anthropic stream ended before message_stop');
+  else if (finished && !failed && !COMPLETE_STOPS.has(stopReason)) {
+    failed = true;
+    console.error('anthropic answer incomplete, stop_reason:', stopReason);
+  }
   res.end(finished && !failed ? DONE_MARK : FAIL_MARK);
 };
